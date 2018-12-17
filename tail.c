@@ -31,28 +31,34 @@ int tail(int n, char const *file_name) {
     } else
         fr = stdin;
 
-    char buffer[n][MAX_LINE_LENGTH + 1];
     int c;
-    int act_char = 0;
+    if((c = fgetc(fr)) == EOF)
+        return 0;
+    else
+        ungetc(c,fr);
+    char buffer[n][MAX_LINE_LENGTH + 1];
+    int act_char_num = 0;
     int act_line = 0;
     int lines_num = 0;
 
     int number_of_shortened[n];
     int index = 0;
 
-    while ((c = fgetc(fr)) != EOF) {
-        buffer[act_line][act_char] = c;
-        act_char++;
+    while (1) {
+        c = fgetc(fr);
+        buffer[act_line][act_char_num] = c;
+        act_char_num++;
 
-        if (c == '\n' || act_char == MAX_LINE_LENGTH) {
-            if (act_char == MAX_LINE_LENGTH) {
+        if (c == '\n' || act_char_num == MAX_LINE_LENGTH || c == EOF) {
+            if (act_char_num == MAX_LINE_LENGTH) {
                 number_of_shortened[index++] = lines_num + 1;
                 while (fgetc(fr) != '\n');
-                buffer[act_line][act_char - 1] = '\n';   //pridani znaku noveho radku na konec orezaneho radku
+                buffer[act_line][act_char_num - 1] = '\n';
             }
-            act_char = 0;
+            act_char_num = 0;
             act_line++;
             lines_num++;
+            if (c == EOF) break;
         }
 
         if (act_line == n)
@@ -62,7 +68,7 @@ int tail(int n, char const *file_name) {
     if (index > 0) {
         for (int i = 0; i < index; i++) {
             if (lines_num - n <
-                number_of_shortened[i])   //staci nam informovat o ykraceni tech radku, co vypisujeme. Ostatni ne.
+                number_of_shortened[i])   //we will notify only about printed lines
                 fprintf(stderr, "Line number %d was over the length limit (%d). The line was shortened.\n",
                         number_of_shortened[i],
                         MAX_LINE_LENGTH);
@@ -95,26 +101,27 @@ int tail(int n, char const *file_name) {
  * @param	argv arguments
 */
 int main(int argc, char const **argv) {
-    int status = 0;
+    int ret_value = 0;
+
     if (argc == 2) //tail file
-        status = tail(DEFUALT_NUM_OF_LINES, argv[1]);
+        ret_value = tail(DEFUALT_NUM_OF_LINES, argv[1]);
     else if (N_LINES_FILE) { //tail -n 20 file
         if (atoi(argv[2]) == 0) //if n == 0 nothing to print -> we are done
             return 0;
-        status = tail(atoi(argv[2]), argv[3]);
+        ret_value = tail(atoi(argv[2]), argv[3]);
     } else if (N_LINES_KEYBOARD) { //tail -n 20
         if (atoi(argv[2]) == 0) //if n == 0 nothing to print -> we are done
             return 0;
 
-        status = tail(atoi(argv[2]), NULL);
+        ret_value = tail(atoi(argv[2]), NULL);
     } else if (argc == 1) //tail
-        status = tail(DEFUALT_NUM_OF_LINES, NULL);
+        ret_value = tail(DEFUALT_NUM_OF_LINES, NULL);
     else { //error
         fprintf(stderr, "Arguments are not valid\n");
-        status = 1;
+        ret_value = 1;
     }
 
-    if (status)
+    if (ret_value)
         return 1;
 
     return 0;
