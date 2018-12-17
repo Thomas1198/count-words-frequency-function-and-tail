@@ -16,7 +16,7 @@
 
 /*
  * @brief It will print last N lines of file or stdin
- * @param	n line from which start to print
+ * @param n line from which start to print
  * @param file_name if NULL loads from stdin, else from the file
  * @return 1 when error, 0 success
 */
@@ -30,6 +30,11 @@ int tail(int n, char const *file_name) {
         }
     } else
         fr = stdin;
+
+    if(n<0){
+        fprintf(stderr, "Invalid parameter n (n has to be greater or equal to 0)\n");
+        return 1;
+    }
 
     int c;
     if((c = fgetc(fr)) == EOF)
